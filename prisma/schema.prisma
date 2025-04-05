@@ -26,24 +26,42 @@ model Post {
     @@index([name])
 }
 
-// Necessary for Next auth
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    // if you are using Github OAuth, you can get rid of the username attribute (that is for Twitter OAuth)
+    username      String?
+    gh_username   String?
+    email         String?   @unique
+    emailVerified DateTime?
+    image         String?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    accounts      Account[]
+    sessions      Session[]
+    posts         Post[]
+}
+
 model Account {
     id                       String  @id @default(cuid())
     userId                   String
     type                     String
     provider                 String
     providerAccountId        String
-    refresh_token            String? @db.Text
-    access_token             String? // @db.Text
+    refresh_token            String? @db.LongText
+    refresh_token_expires_in Int?
+    access_token             String? @db.LongText
     expires_at               Int?
     token_type               String?
     scope                    String?
-    id_token                 String? // @db.Text
+    id_token                 String? @db.LongText
     session_state            String?
+    oauth_token_secret       String?
+    oauth_token              String?
     user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
 
     @@unique([provider, providerAccountId])
+    @@index([userId])
 }
 
 model Session {
@@ -52,17 +70,8 @@ model Session {
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
-model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
+    @@index([userId])
 }
 
 model VerificationToken {
